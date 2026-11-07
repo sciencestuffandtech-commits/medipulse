@@ -1,0 +1,607 @@
+<title>MediPulse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@600;700&display=swap">
+<style>
+/* Layout: sidebar + content on tablets and desktop, bottom tab bar on phones. Navy chrome, turquoise for live state. */
+:root{
+  --bg:#EEF4F7; --surface:#FFFFFF; --surface-2:#F5F9FB; --ink:#0B2545; --ink-2:#4B6079; --line:#D9E4EB;
+  --navy:#0B2545; --on-navy:#FFFFFF; --accent:#19C2BA; --accent-ink:#08716D; --accent-soft:#DDF6F4;
+  --warn:#9A5B00; --warn-soft:#FFF1D6; --bad:#B42318; --bad-soft:#FDE7E4; --ok:#067647; --ok-soft:#DCF5E7;
+  --font-display:'Sora','Segoe UI',system-ui,sans-serif; --font-body:'Manrope','Segoe UI',system-ui,sans-serif;
+  --radius:18px; --shadow:0 1px 2px rgba(11,37,69,.06),0 8px 24px rgba(11,37,69,.06);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07142A; --surface:#0E2342; --surface-2:#122B4F; --ink:#E9F1F8; --ink-2:#9DB2C7; --line:#1E3A5F;
+  --navy:#0A1B35; --accent:#2ED3CB; --accent-ink:#52E3DB; --accent-soft:#0F3A4A;
+  --warn:#FFC266; --warn-soft:#3A2B0B; --bad:#FF9C92; --bad-soft:#3F1713; --ok:#6EE0A3; --ok-soft:#0F3524;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07142A; --surface:#0E2342; --surface-2:#122B4F; --ink:#E9F1F8; --ink-2:#9DB2C7; --line:#1E3A5F;
+  --navy:#0A1B35; --accent:#2ED3CB; --accent-ink:#52E3DB; --accent-soft:#0F3A4A;
+  --warn:#FFC266; --warn-soft:#3A2B0B; --bad:#FF9C92; --bad-soft:#3F1713; --ok:#6EE0A3; --ok-soft:#0F3524;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;margin:0}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:1.65rem} h2{font-size:1.15rem} h3{font-size:1rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent-ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.muted{color:var(--ink-2)} .small{font-size:.85rem} .num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);font-weight:700}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px;padding:0 1.1rem;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700;text-decoration:none;color:var(--ink)}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.btn.primary:hover{filter:brightness(1.15)}
+.btn.teal{background:var(--accent);border-color:var(--accent);color:#06243A}
+.btn.teal:hover{filter:brightness(1.05)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.block{width:100%}
+
+/* forms */
+.field{display:flex;flex-direction:column;gap:.35rem;min-width:0}
+.field label{font-weight:600;font-size:.88rem}
+.input{min-height:46px;padding:0 .9rem;border-radius:12px;border:1px solid var(--line);background:var(--surface);width:100%}
+.input:focus{border-color:var(--accent)}
+.form{display:flex;flex-direction:column;gap:1rem}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem}
+.err{color:var(--bad);font-size:.88rem;min-height:1.2em}
+
+/* auth */
+.auth{min-height:100%;display:grid;grid-template-columns:1fr;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.auth-card{width:100%;max-width:440px;margin:auto;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:20px}
+.brand{display:flex;align-items:center;gap:.65rem;font-family:var(--font-display);font-weight:700;font-size:1.25rem}
+.brand svg{flex:none}
+.notice{display:flex;gap:.6rem;padding:.8rem 1rem;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-size:.85rem;color:var(--ink-2)}
+.notice.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.notice.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.notice.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+
+/* shell */
+.shell{display:grid;grid-template-columns:1fr;min-height:100%}
+.side{display:none}
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:14px}
+.main{min-width:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:110px}
+.content{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.icon-btn{position:relative;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink);text-decoration:none}
+.badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:var(--accent);color:#06243A;font-size:.72rem;font-weight:800;display:grid;place-items:center;padding:0 5px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--navy);padding:8px max(8px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));z-index:5}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;color:#A9BDD3;text-decoration:none;font-size:.7rem;font-weight:700;border-radius:10px}
+.tab[aria-current="page"]{color:#fff;background:rgba(255,255,255,.1)}
+.tab[aria-current="page"] svg{color:var(--accent)}
+@media (min-width:900px){
+  .shell{grid-template-columns:260px 1fr}
+  .side{display:flex;flex-direction:column;gap:6px;background:var(--navy);color:#fff;padding:24px 16px;position:sticky;top:0;height:100vh}
+  .side .brand{color:#fff;margin-bottom:20px;padding-left:8px}
+  .nav{display:flex;align-items:center;gap:.75rem;padding:11px 12px;border-radius:12px;color:#B7C8DB;text-decoration:none;font-weight:600}
+  .nav:hover{background:rgba(255,255,255,.07)}
+  .nav[aria-current="page"]{background:rgba(255,255,255,.12);color:#fff}
+  .nav[aria-current="page"] svg{color:var(--accent)}
+  .tabbar{display:none}
+  .main{padding-bottom:48px}
+  .top .brand{display:none}
+}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;min-width:0}
+.card.flat{box-shadow:none}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.hero{background:var(--navy);color:#fff;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:6px}
+.hero p{color:#B7C8DB}
+.pill{display:inline-flex;align-items:center;gap:.45rem;padding:.25rem .7rem;border-radius:999px;font-size:.8rem;font-weight:700;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);width:max-content}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ink-2)}
+.pill.connected{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink)} .pill.connected i{background:var(--accent)}
+.pill.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)} .pill.warn i{background:var(--warn)}
+.pill.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)} .pill.bad i{background:var(--bad)}
+.vitals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.vital{background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:2px}
+.vital b{font-family:var(--font-display);font-size:2.1rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.vital b small{font-size:.9rem;font-weight:600;color:var(--ink-2);margin-left:4px}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid var(--line);text-decoration:none;color:inherit;min-width:0}
+.item:first-child{border-top:0}
+.item .grow{min-width:0;flex:1}
+.item.unread .t{font-weight:800}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.empty{padding:28px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ink-2)}
+.pulse-ring{width:84px;height:84px;border-radius:50%;border:6px solid var(--accent-soft);border-top-color:var(--accent);animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.pulse-ring{animation:none}}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--ink-2);font-size:11px;font-family:var(--font-body)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .ln{fill:none;stroke:var(--accent-ink);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.chart .pt{fill:var(--surface);stroke:var(--accent-ink);stroke-width:2}
+.chart .pt.last{fill:var(--accent-ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:0 14px;min-height:40px;cursor:pointer;font-weight:700;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--navy);color:#fff;padding:12px 18px;border-radius:14px;box-shadow:var(--shadow);z-index:20;max-width:calc(100% - 32px);font-weight:600;border:1px solid rgba(255,255,255,.15)}
+@media (min-width:900px){.toast{bottom:32px}}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em;background:var(--surface-2);padding:2px 6px;border-radius:6px;border:1px solid var(--line)}
+details summary{cursor:pointer;font-weight:700}
+</style>
+
+<div id="root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ============ helpers ============ */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g,'').slice(0,16) : Math.random().toString(36).slice(2,12)+Date.now().toString(36));
+const fmtDT = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString([], {dateStyle:'medium', timeStyle:'short'}); };
+const fmtD = (iso) => new Date(iso).toLocaleDateString([], {month:'short', day:'numeric'});
+
+/* ============ storage ============ */
+/* Preview mode: data lives in this browser only. Each adapter below has the same shape as
+   firebase-adapter.js, so a hosted build swaps them for Firebase Auth, Firestore and FCM. */
+const mem = {};
+const KV = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v === null ? (k in mem ? mem[k] : d) : JSON.parse(v); } catch { return k in mem ? mem[k] : d; } },
+  set(k, v){ mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch {} if (!Cloud.hydrating && /^mp\.(rec|not)\./.test(k)) Cloud.queue(); },
+  del(k){ delete mem[k]; try { localStorage.removeItem(k); } catch {} }
+};
+const API_URL = 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE';
+const Cloud = {
+  hydrating:false, t:null,
+  async call(action, body = {}){
+    const s = KV.get('mp.session', null);
+    const payload = JSON.stringify({action, email: s && s.email, token: s && s.token, ...body});
+    let j;
+    try { const r = await fetch(API_URL, {method:'POST', body: payload}); j = await r.json(); }
+    catch { throw new Error('Cannot reach the MediPulse Drive service. Check API_URL and your connection.'); }
+    if (!j.ok) {
+      if (j.error === 'SESSION') { KV.del('mp.session'); location.hash = '#login'; render(); throw new Error('Session expired. Log in again.'); }
+      throw new Error(j.error);
+    }
+    return j.data;
+  },
+  queue(){ clearTimeout(this.t); this.t = setTimeout(() => this.push(), 1500); },
+  async push(){ const s = KV.get('mp.session', null); if (!s || s.role !== 'patient') return; clearTimeout(this.t);
+    try { await this.call('sync', {records: KV.get('mp.rec.'+s.uid, []), notifs: KV.get('mp.not.'+s.uid, [])}); } catch {} }
+};
+function applySession(d){
+  Cloud.hydrating = true;
+  const x = d.user;
+  KV.set('mp.session', {uid:x.id, email:x.email, name:x.name, role:x.role, token:d.token, doctorId:x.doctorId || '', doctorName:x.doctorName || '', pendingName:x.pendingDoctorName || ''});
+  if (x.role === 'patient') { KV.set('mp.rec.'+x.id, d.records || []); KV.set('mp.not.'+x.id, d.notifs || []); KV.set('mp.emg.'+x.id, d.emergencies || []); }
+  Cloud.hydrating = false;
+}
+const Auth = {
+  current(){ const s = KV.get('mp.session', null); return s ? {uid:s.uid, email:s.email, name:s.name, role:s.role, doctorId:s.doctorId, doctorName:s.doctorName, pendingName:s.pendingName} : null; },
+  async sendPasswordReset(){ throw new Error('Password reset is not built yet in the Drive version.'); },
+  signOut(){ Cloud.push(); KV.del('mp.session'); },
+  updateName(id, name){ const s = KV.get('mp.session', null); if (s) KV.set('mp.session', {...s, name}); Cloud.call('rename', {name}).catch(() => {}); },
+  deleteAccount(id){ Cloud.call('delete').catch(() => {}); KV.del('mp.rec.'+id); KV.del('mp.not.'+id); KV.del('mp.host.'+id); KV.del('mp.emg.'+id); KV.del('mp.session'); }
+};
+const Records = {
+  list: (id) => KV.get('mp.rec.'+id, []).sort((a,b) => new Date(b.at) - new Date(a.at)),
+  add(id, r){ const l = KV.get('mp.rec.'+id, []); l.push(r); KV.set('mp.rec.'+id, l); },
+  remove(id, rid){ KV.set('mp.rec.'+id, KV.get('mp.rec.'+id, []).filter(r => r.id !== rid)); }
+};
+const Notifs = {
+  list: (id) => KV.get('mp.not.'+id, []).sort((a,b) => new Date(b.at) - new Date(a.at)),
+  add(id, n){ const l = KV.get('mp.not.'+id, []); l.push({id:uid(), at:new Date().toISOString(), read:false, ...n}); KV.set('mp.not.'+id, l.slice(-100)); },
+  markAllRead(id){ KV.set('mp.not.'+id, KV.get('mp.not.'+id, []).map(n => ({...n, read:true}))); },
+  clear(id){ KV.set('mp.not.'+id, []); },
+  unread: (id) => KV.get('mp.not.'+id, []).filter(n => !n.read).length
+};
+document.addEventListener('visibilitychange', () => { if (document.hidden) Cloud.push(); });
+
+/* ---- patient: doctor link + emergencies ---- */
+const Care = {
+  emg: (id) => KV.get('mp.emg.'+id, []),
+  async link(code){ const d = await Cloud.call('link', {code}); const s = KV.get('mp.session', null); KV.set('mp.session', {...s, pendingName:d.pendingDoctorName}); },
+  async cancel(){ await Cloud.call('cancelLink'); const s = KV.get('mp.session', null); KV.set('mp.session', {...s, pendingName:''}); },
+  async unlink(){ await Cloud.call('unlink'); const s = KV.get('mp.session', null); KV.set('mp.session', {...s, doctorId:'', doctorName:''}); },
+  async raise(note){
+    const u = Auth.current(), l = Records.list(u.uid)[0];
+    await Cloud.push();
+    KV.set('mp.emg.'+u.uid, await Cloud.call('emergency', {reading: l ? {bpm:l.bpm, spo2:l.spo2, at:l.at} : null, note}));
+  }
+};
+const EMG_LABEL = {open:'Sent, waiting for doctor', acknowledged:'Doctor responded', resolved:'Resolved'};
+function careSection(u){
+  const em = Care.emg(u.uid).slice().sort((a,b) => new Date(b.at) - new Date(a.at)).slice(0, 5);
+  const ids = `<p class="small muted">Your patient ID: <b>${esc(u.uid)}</b><br>Your Drive folder: <b>${esc(u.name)}_${esc(u.uid)}</b></p>`;
+  const body = u.doctorId
+    ? `<p>Linked to <b>Dr. ${esc(u.doctorName)}</b> (${esc(u.doctorId)}). They can see your readings and respond to emergencies.</p>
+       <div class="actions"><button class="btn" data-act="unlink">Unlink doctor</button></div>
+       <form class="form" data-form="emergency" novalidate><div class="field"><label for="enote">Emergency note (optional)</label><input class="input" id="enote" maxlength="200"></div><button class="btn danger" type="submit">Send emergency alert</button><p class="small muted">Emails your latest reading to your doctor. In a real emergency call 123 (Egypt) first.</p></form>`
+    : u.pendingName
+      ? `<p>Request sent to <b>Dr. ${esc(u.pendingName)}</b>. Waiting for them to accept.</p><div class="actions"><button class="btn" data-act="cancellink">Cancel request</button></div>`
+      : `<form class="form" data-form="link" novalidate><p class="muted">Ask your doctor for their link code (on their dashboard), enter it here, and they will accept your request.</p><div class="field"><label for="lcode">Doctor link code</label><input class="input" id="lcode" placeholder="ABC123" maxlength="12" autocapitalize="characters"></div><button class="btn primary" type="submit" style="width:max-content">Send link request</button></form>`;
+  const list = em.length ? `<div class="list">${em.map(e => `<div class="item"><span>${esc(fmtDT(e.at))} · ${esc(EMG_LABEL[e.status] || e.status)}${e.response ? ' · ' + esc(e.response) : ''}</span></div>`).join('')}</div>` : '';
+  return `<section class="card"><h2>Doctor and emergencies</h2>${ids}${body}${list}</section>`;
+}
+
+/* ---- doctor dashboard ---- */
+async function docLoad(route){
+  try {
+    if (route.startsWith('patient-')) {
+      const id = route.slice(8); if ((ui.pt && ui.pt.id === id) || ui.ptLoading === id) return;
+      ui.ptLoading = id; ui.pt = await Cloud.call('docPatient', {patientId:id}); ui.ptLoading = null; render();
+    } else {
+      if (ui.docList || ui.docLoading) return;
+      ui.docLoading = true; const d = await Cloud.call('docPatients'); ui.docList = d.patients; ui.docReq = d.requests; ui.docCode = d.me.code; ui.myId = d.me.id; ui.docLoading = false; render();
+    }
+  } catch (e) {
+    ui.docLoading = false; ui.ptLoading = null; ui.docErr = e.message;
+    if (route.startsWith('patient-')) ui.pt = {id:route.slice(8), error:e.message}; else ui.docList = [];
+    render();
+  }
+}
+function doctorView(u, route){
+  const head = `<header style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 20px"><div class="brand">${logo(32)}MediPulse <span class="pill">Doctor</span></div><div class="actions"><span class="small muted">Dr. ${esc(u.name)} · ID <b>${esc(ui.myId || u.uid)}</b></span><button class="btn" data-act="docrefresh">Refresh</button><button class="btn" data-act="logout">Log out</button></div></header>`;
+  let body;
+  if (route.startsWith('patient-')) {
+    const p = ui.pt;
+    if (!p || p.id !== route.slice(8)) body = '<p class="muted">Loading…</p>';
+    else if (p.error) body = `<p class="err">${esc(p.error)}</p><a href="#doctor">Back</a>`;
+    else body = `<p><a href="#doctor">← All patients</a></p><h1>${esc(p.name)}</h1><p class="small muted">Folder: ${esc(p.folder)} · <a href="${esc(p.url)}" target="_blank" rel="noopener">Open in Drive</a></p>
+      <section class="card"><h2>Emergencies</h2>${p.emergencies.length ? `<div class="list">${p.emergencies.map(e => `<div class="item"><span>${esc(fmtDT(e.at))} · ${esc(e.status)}${e.reading ? ' · ' + esc(e.reading.bpm) + ' BPM, SpO₂ ' + esc(e.reading.spo2) + '%' : ''}${e.note ? ' · ' + esc(e.note) : ''}${e.response ? ' · Reply: ' + esc(e.response) : ''}</span></div>`).join('')}</div>` : '<p class="muted">None.</p>'}</section>
+      <section class="card"><h2>Recent checkups</h2>${p.records.length ? `<div class="list">${p.records.map(r => `<div class="item"><span>${esc(fmtDT(r.at))} · <b>${esc(r.bpm)}</b> BPM · SpO₂ <b>${esc(r.spo2)}%</b> · ${esc(r.quality || '')}</span></div>`).join('')}</div>` : '<p class="muted">No checkups yet.</p>'}</section>`;
+  } else {
+    const list = ui.docList;
+    if (!list) body = '<p class="muted">Loading patients…</p>';
+    else {
+      const items = list.flatMap(p => (p.open || []).map(e => ({p, e})));
+      const em = items.map(({p, e}) => `<section class="card"><h2>Emergency · ${esc(p.name)} <span class="small muted">(${esc(p.folder)})</span></h2><p>${esc(fmtDT(e.at))} — ${e.reading ? esc(e.reading.bpm) + ' BPM, SpO₂ ' + esc(e.reading.spo2) + '%' : 'no reading'}${e.note ? ' · ' + esc(e.note) : ''}</p><p class="small muted">Status: ${esc(e.status)}${e.response ? ' · Your reply: ' + esc(e.response) : ''}</p>
+        <form class="form" data-form="respond" data-pid="${esc(p.id)}" data-eid="${esc(e.id)}" novalidate><div class="field"><label for="rtext-${esc(e.id)}">Response</label><input class="input" id="rtext-${esc(e.id)}" maxlength="300"></div><div class="actions"><button class="btn primary" type="submit">Acknowledge and reply</button><button class="btn" type="button" data-act="resolve" data-pid="${esc(p.id)}" data-eid="${esc(e.id)}">Mark resolved</button></div></form></section>`).join('');
+      const pts = list.length ? `<div class="list">${list.map(p => `<a class="item" href="#patient-${esc(p.id)}"><span><b>${esc(p.name)}</b> <span class="small muted">${esc(p.folder)}</span><br>${p.last ? esc(p.last.bpm) + ' BPM · SpO₂ ' + esc(p.last.spo2) + '% · ' + esc(fmtDT(p.last.at)) : 'No checkups yet'}</span>${p.open.length ? '<span class="pill bad"><i></i>' + p.open.length + ' open</span>' : ''}</a>`).join('')}</div>` : `<p class="muted">${ui.docErr ? esc(ui.docErr) : 'No linked patients yet. Give patients your link code.'}</p>`;
+      const codeCard = `<section class="card"><h2>Your link code</h2><p class="muted">Give this code to a patient. They enter it in their Profile, then you accept their request below.</p><p style="font-size:1.7rem;font-weight:700;letter-spacing:.14em;margin:8px 0">${esc(ui.docCode || '…')}</p><button class="btn" data-act="newcode">Generate new code</button></section>`;
+      const rq = ui.docReq || [];
+      const reqCard = rq.length ? `<section class="card"><h2>Link requests</h2><div class="list">${rq.map(r => `<div class="item"><span><b>${esc(r.name)}</b> <span class="small muted">${esc(r.folder)}</span></span><span class="actions"><button class="btn primary" data-act="accept" data-pid="${esc(r.patientId)}">Accept</button><button class="btn" data-act="reject" data-pid="${esc(r.patientId)}">Decline</button></span></div>`).join('')}</div></section>` : '';
+      body = `<h1>Patients</h1>${em}${reqCard}<section class="card"><h2>Linked patients</h2>${pts}</section>${codeCard}`;
+    }
+  }
+  return head + `<main style="max-width:820px;margin:0 auto;padding:0 20px 40px">${body}</main>`;
+}
+setInterval(async () => {
+  const u = Auth.current(); if (!u || document.hidden || /INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || '')) return;
+  try {
+    if (u.role === 'doctor') { const d = await Cloud.call('docPatients'); if (JSON.stringify([d.patients, d.requests]) !== JSON.stringify([ui.docList, ui.docReq])) { ui.docList = d.patients; ui.docReq = d.requests; ui.docCode = d.me.code; render(); } }
+    else { const d = await Cloud.call('pull'); const s = KV.get('mp.session', null); const chg = JSON.stringify(d.emergencies) !== JSON.stringify(Care.emg(u.uid)) || (s.doctorId || '') !== d.doctorId || (s.pendingName || '') !== d.pendingDoctorName;
+      if (chg) { Cloud.hydrating = true; KV.set('mp.emg.'+u.uid, d.emergencies); KV.set('mp.session', {...s, doctorId:d.doctorId, doctorName:d.doctorName, pendingName:d.pendingDoctorName}); Cloud.hydrating = false; if (location.hash === '#profile') render(); } }
+  } catch {}
+}, 30000);
+
+/* ============ device (Wi-Fi to ESP32) ============ */
+const HOST_RE = /^[a-z0-9]([a-z0-9.\-]*[a-z0-9])?(:\d{1,5})?$/i;
+const dev = { status:'disconnected', host:'', id:'', fw:'', error:'', found:[], timer:null, fails:0, scanning:false };
+const cp = { phase:'idle', msg:'', result:null, abort:false };
+let ui = { chartKey:'bpm', armed:null, authErr:'', busy:false };
+
+async function api(path, opts={}, timeout=4000){
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), timeout);
+  try {
+    const res = await fetch('http://' + dev.host + path, {...opts, signal:ctl.signal});
+    if (!res.ok) throw new Error('Device answered with status ' + res.status + '.');
+    return await res.json();
+  } finally { clearTimeout(t); }
+}
+async function probe(host){
+  const prev = dev.host; dev.host = host;
+  try {
+    const s = await api('/api/status');
+    if (s.device !== 'medipulse' || typeof s.device_id !== 'string') throw new Error('That address is not a MediPulse device.');
+    return {host, id:s.device_id.slice(0,64), fw:String(s.firmware||'')};
+  } finally { dev.host = prev; }
+}
+function explain(e){
+  if (e && e.name === 'AbortError') return 'The device did not answer in time. Check that it is powered on and on the same Wi-Fi network as this phone.';
+  if (e instanceof TypeError) return 'The browser could not reach the device. Check the address and that the phone is on the same Wi-Fi network. A page opened over https cannot talk to a plain http device, so use the installed app or a local http copy of this page.';
+  return e.message || 'Connection failed.';
+}
+async function scanDevices(){
+  dev.scanning = true; dev.error = ''; dev.found = []; render();
+  const hosts = [...new Set([dev.host, 'medipulse.local'].filter(h => h && HOST_RE.test(h)))];
+  for (const h of hosts){ try { dev.found.push(await probe(h)); } catch (e) { dev.error = explain(e); } }
+  if (dev.found.length) dev.error = '';
+  dev.scanning = false; render();
+}
+async function connectDevice(host){
+  host = host.trim().replace(/^https?:\/\//,'').replace(/\/+$/,'');
+  if (!HOST_RE.test(host)) { dev.error = 'Enter the device address, for example 192.168.1.50 or medipulse.local.'; render(); return; }
+  dev.status = 'connecting'; dev.error = ''; render();
+  try {
+    const info = await probe(host);
+    Object.assign(dev, {status:'connected', host:info.host, id:info.id, fw:info.fw, fails:0});
+    KV.set('mp.host.'+Auth.current().uid, info.host);
+    Notifs.add(Auth.current().uid, {kind:'device', title:'Device connected', body:'MediPulse ' + info.id + ' is connected over Wi-Fi.'});
+    toast('Connected to ' + info.id); startMonitor();
+  } catch (e) { dev.status = 'error'; dev.error = explain(e); }
+  render();
+}
+function startMonitor(){
+  clearInterval(dev.timer);
+  dev.timer = setInterval(async () => {
+    if (!Auth.current() || dev.status === 'disconnected') return clearInterval(dev.timer);
+    if (cp.phase === 'running') return;
+    try { await api('/api/status'); if (dev.status === 'lost') { dev.status = 'connected'; dev.fails = 0; Notifs.add(Auth.current().uid, {kind:'device', title:'Device reconnected', body:'MediPulse ' + dev.id + ' is back online.'}); toast('Device reconnected'); render(); } dev.fails = 0; }
+    catch { dev.fails++; if (dev.fails === 3 && dev.status === 'connected') { dev.status = 'lost'; dev.error = 'Connection lost. Trying to reconnect.'; Notifs.add(Auth.current().uid, {kind:'device', title:'Device connection lost', body:'MediPulse ' + dev.id + ' stopped responding. The app keeps trying to reconnect.'}); toast('Device connection lost'); render(); } }
+  }, 6000);
+}
+function disconnectDevice(){
+  clearInterval(dev.timer);
+  if (dev.status === 'connected' || dev.status === 'lost') Notifs.add(Auth.current().uid, {kind:'device', title:'Device disconnected', body:'You disconnected MediPulse ' + dev.id + '.'});
+  Object.assign(dev, {status:'disconnected', id:'', fw:'', error:'', fails:0, found:[]}); render();
+}
+
+/* ============ checkups ============ */
+const validReading = (d) => Number.isFinite(d.bpm) && d.bpm >= 20 && d.bpm <= 250 && Number.isFinite(d.spo2) && d.spo2 >= 50 && d.spo2 <= 100;
+function saveRecord(r){
+  const u = Auth.current().uid; Records.add(u, r);
+  Notifs.add(u, {kind:'checkup', title:'Checkup completed', body:r.bpm + ' BPM, SpO₂ ' + r.spo2 + '%. Saved to your history.', ref:r.id});
+}
+async function startCheckup(){
+  if (dev.status !== 'connected') return;
+  Object.assign(cp, {phase:'running', msg:'Place your finger on the sensor and stay still.', result:null, abort:false}); render();
+  try {
+    await api('/api/checkup/start', {method:'POST'});
+    const until = Date.now() + 120000;
+    while (Date.now() < until && !cp.abort){
+      await new Promise(r => setTimeout(r, 1500));
+      if (cp.abort) return;
+      const d = await api('/api/checkup');
+      if (d.status === 'failed'){ Object.assign(cp, {phase:'failed', msg:'The device could not finish the measurement' + (d.reason ? ' (' + String(d.reason).slice(0,60) + ')' : '') + '. Check finger placement and try again.'}); return render(); }
+      if (d.status === 'completed'){
+        const bpm = Number(d.bpm), spo2 = Number(d.spo2);
+        if (!validReading({bpm, spo2})) { Object.assign(cp, {phase:'failed', msg:'The device sent a reading outside the valid range, so it was not saved.'}); return render(); }
+        const q = ['good','fair','poor'].includes(d.quality) ? d.quality : 'fair';
+        const rec = {id:uid(), bpm:Math.round(bpm), spo2:Math.round(spo2*10)/10, at:new Date().toISOString(), deviceId:String(d.device_id || dev.id).slice(0,64), quality:q, status:'completed', source:'wifi'};
+        saveRecord(rec); Object.assign(cp, {phase:'done', result:rec}); toast('Checkup completed and saved'); return render();
+      }
+    }
+    if (!cp.abort){ Object.assign(cp, {phase:'failed', msg:'The checkup timed out. Try again.'}); render(); }
+  } catch (e) { Object.assign(cp, {phase:'failed', msg:explain(e)}); render(); }
+}
+async function cancelCheckup(){ cp.abort = true; Object.assign(cp, {phase:'idle', msg:''}); try { await api('/api/checkup/cancel', {method:'POST'}, 2000); } catch {} render(); }
+
+/* ============ icons & logo ============ */
+const P = {
+  home:'<path d="M3 11l9-8 9 8v10H3z"/>', device:'<path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/>',
+  pulse:'<path d="M2 12h5l2-6 4 12 2-6h7"/>', history:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  map:'<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>', bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', back:'<path d="M15 5l-7 7 7 7"/>'
+};
+const ic = (n, s=22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+const logo = (s=34) => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="10" fill="#0B2545"/><path d="M16 26.5C9 21 5.5 17.3 5.5 13a5.2 5.2 0 0 1 10.5-1.2A5.2 5.2 0 0 1 26.500 13c0 4.300-3.500 8-10.500 13.500z" fill="none" stroke="#19C2BA" stroke-width="1.4" opacity=".55"/><path d="M4 16.500h6l2.500-6 4 11 3-8.500 1.800 3.500H28" fill="none" stroke="#19C2BA" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/* ============ chart ============ */
+function trend(recs, key){
+  const pts = recs.slice().sort((a,b) => new Date(a.at) - new Date(b.at)).slice(-30).map(r => ({t:+new Date(r.at), v:r[key]}));
+  if (!pts.length) return '';
+  const W=640,H=220,L=40,R=14,T=14,B=28;
+  const vs = pts.map(p => p.v);
+  let lo, hi;
+  if (key === 'spo2'){ lo = Math.max(50, Math.floor(Math.min(...vs) - 2)); hi = 100; }
+  else { lo = Math.max(0, Math.floor((Math.min(...vs) - 8) / 10) * 10); hi = Math.ceil((Math.max(...vs) + 8) / 10) * 10; }
+  if (hi === lo) hi = lo + 10;
+  const t0 = pts[0].t, t1 = pts[pts.length-1].t;
+  const X = (t) => pts.length === 1 || t1 === t0 ? (L + (W-L-R)/2) : L + (t - t0) / (t1 - t0) * (W-L-R);
+  const Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H-T-B);
+  const ticks = [0,1,2,3].map(i => lo + (hi-lo) * i / 3);
+  const grid = ticks.map(v => `<line class="grid" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end">${Math.round(v)}</text>`).join('');
+  const line = pts.length > 1 ? `<polyline class="ln" points="${pts.map(p => X(p.t).toFixed(1)+','+Y(p.v).toFixed(1)).join(' ')}"/>` : '';
+  const dots = pts.map((p,i) => `<circle class="pt${i === pts.length-1 ? ' last' : ''}" cx="${X(p.t).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="4.500"/>`).join('');
+  const xl = `<text x="${L}" y="${H-6}">${fmtD(t0)}</text>` + (pts.length > 1 ? `<text x="${W-R}" y="${H-6}" text-anchor="end">${fmtD(t1)}</text>` : '');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${key === 'bpm' ? 'Heart rate' : 'SpO2'} trend, ${pts.length} checkups">${grid}${line}${dots}${xl}</svg>`;
+}
+
+/* ============ views ============ */
+const qTag = (q) => q === 'poor' ? '<span class="pill warn"><i></i>Low quality</span>' : q === 'fair' ? '<span class="pill"><i></i>Fair quality</span>' : q === 'good' ? '<span class="pill connected"><i></i>Good quality</span>' : '<span class="pill"><i></i>Manual entry</span>';
+const statusPill = () => ({connected:'<span class="pill connected"><i></i>Connected</span>', connecting:'<span class="pill warn"><i></i>Connecting</span>', lost:'<span class="pill warn"><i></i>Reconnecting</span>', error:'<span class="pill bad"><i></i>Connection failed</span>', disconnected:'<span class="pill"><i></i>Not connected</span>'}[dev.status]);
+
+function authView(mode){
+  const err = `<p class="err" id="authErr" role="alert">${esc(ui.authErr)}</p>`;
+  const note = '<div class="notice">Preliminary build: data is stored in the MediPulse Google Drive.</div>';
+  const em = (v='') => `<div class="field"><label for="email">Email</label><input class="input" id="email" type="email" autocomplete="email" value="${esc(v)}" required></div>`;
+  const pw = (ac) => `<div class="field"><label for="pw">Password</label><input class="input" id="pw" type="password" autocomplete="${ac}" minlength="8" required></div>`;
+  const nm = '<div class="field"><label for="name">Full name</label><input class="input" id="name" autocomplete="name" maxlength="80" required></div>';
+  const btn = (t) => `<button class="btn primary block" type="submit" ${ui.busy ? 'disabled' : ''}>${t}</button>`;
+  const isDoc = mode === 'dlogin' || mode === 'dsignup';
+  const tabs = ['login','signup','dlogin','dsignup'].includes(mode) ? `<div class="seg" role="group" aria-label="Account type" style="margin-bottom:12px"><a class="btn" href="#login" aria-pressed="${!isDoc}">Patient</a><a class="btn" href="#dlogin" aria-pressed="${isDoc}">Doctor</a></div>` : '';
+  const links = {
+    login:'<p class="small muted">New here? <a href="#signup">Create an account</a> &nbsp;·&nbsp; <a href="#forgot">Forgot password?</a></p>',
+    signup:'<p class="small muted">Already registered? <a href="#login">Log in</a></p>',
+    dlogin:'<p class="small muted">New doctor? <a href="#dsignup">Register</a></p>',
+    dsignup:'<p class="small muted">Already registered? <a href="#dlogin">Log in</a></p>',
+    forgot:'<p class="small muted"><a href="#login">Back to log in</a></p>',
+    verify:'<p class="small muted"><button class="btn" type="button" data-act="resend">Resend code</button> &nbsp; <a href="#login">Back to log in</a></p>'
+  }[mode];
+  const forms = {
+    login:`<form class="form" data-form="login" novalidate><h1>Patient log in</h1>${em()}${pw('current-password')}${err}${btn('Log in')}</form>`,
+    signup:`<form class="form" data-form="signup" novalidate><h1>Create your account</h1>${nm}${em()}${pw('new-password')}<span class="small muted">At least 8 characters. We email a verification code.</span>${err}${btn('Sign up')}</form>`,
+    dlogin:`<form class="form" data-form="login" novalidate><h1>Doctor log in</h1>${em()}${pw('current-password')}${err}${btn('Log in')}</form>`,
+    dsignup:`<form class="form" data-form="dsignup" novalidate><h1>Doctor registration</h1>${nm}${em()}${pw('new-password')}<div class="field"><label for="dkey">Doctor registration key</label><input class="input" id="dkey" type="password" required></div>${err}${btn('Register')}</form>`,
+    verify:`<form class="form" data-form="verify" novalidate><h1>Verify your email</h1><p class="muted">Enter the 6-digit code we emailed you.</p>${em(ui.verifyEmail || '')}<div class="field"><label for="code">Code</label><input class="input" id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></div>${err}${btn('Verify')}</form>`,
+    forgot:`<form class="form" data-form="forgot" novalidate><h1>Reset password</h1><p class="muted">Not available in the Drive version yet.</p>${em()}${err}${btn('Send reset link')}</form>`
+  };
+  return `<main class="auth"><div class="auth-card"><div class="brand">${logo(40)}MediPulse</div>${tabs}${forms[mode]}${links}${note}</div></main>`;
+}
+
+function dashView(u){
+  const recs = Records.list(u.uid), last = recs[0];
+  const h = new Date().getHours(), g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const first = (u.name || 'there').split(' ')[0];
+  return `<div class="hero"><p class="eyebrow" style="color:#7FE3DD">MediPulse</p><h1>${g}, ${esc(first)}</h1><p>${last ? 'Your last checkup was ' + esc(fmtDT(last.at)) + '.' : 'No checkups yet. Connect your device to take the first one.'}</p></div>
+  <div class="grid2">
+    <section class="card"><div class="eyebrow">Device</div><div class="actions" style="justify-content:space-between;align-items:center">${statusPill()}<a class="btn" href="#device">${dev.status === 'connected' ? 'Manage' : 'Connect device'}</a></div><p class="small muted">${dev.status === 'connected' ? 'MediPulse ' + esc(dev.id) + ' over Wi-Fi at ' + esc(dev.host) : esc(dev.error) || 'Connect to your MediPulse device over Wi-Fi to take a checkup.'}</p></section>
+    <section class="card"><div class="eyebrow">Last completed checkup</div>${last ? `<div class="vitals"><div class="vital"><span class="muted small">Heart rate</span><b>${last.bpm}<small>BPM</small></b></div><div class="vital"><span class="muted small">Blood oxygen</span><b>${last.spo2}<small>% SpO₂</small></b></div></div><div class="actions" style="justify-content:space-between;align-items:center"><span class="small muted">${esc(fmtDT(last.at))}</span>${qTag(last.quality)}</div>` : `<div class="vitals"><div class="vital"><span class="muted small">Heart rate</span><b>—<small>BPM</small></b></div><div class="vital"><span class="muted small">Blood oxygen</span><b>—<small>% SpO₂</small></b></div></div><p class="small muted">Values appear here after your first completed checkup.</p>`}</section>
+  </div>
+  <div class="actions"><a class="btn teal" href="#checkup">${ic('pulse',20)} Start a new checkup</a><a class="btn" href="#history">${ic('history',20)} View medical history</a></div>`;
+}
+
+function deviceView(u){
+  const c = dev.status === 'connected' || dev.status === 'lost';
+  return `<h1>Device</h1>
+  <section class="card"><div class="actions" style="justify-content:space-between;align-items:center">${statusPill()}${c ? `<button class="btn" data-act="disconnect">Disconnect</button>` : ''}</div>
+  ${c ? `<dl class="kv"><dt>Device</dt><dd>${esc(dev.id)}</dd><dt>Address</dt><dd>${esc(dev.host)}</dd><dt>Firmware</dt><dd>${esc(dev.fw) || 'Unknown'}</dd></dl>` : `
+  <form class="form" data-form="connect" novalidate><div class="field"><label for="host">Device address</label><input class="input" id="host" value="${esc(dev.host)}" placeholder="medipulse.local or 192.168.1.50" autocapitalize="off" autocomplete="off" spellcheck="false"><span class="small muted">Shown in the device serial monitor after it joins your Wi-Fi.</span></div>
+  <div class="actions"><button class="btn primary" type="submit" ${dev.status === 'connecting' ? 'disabled' : ''}>${dev.status === 'connecting' ? 'Connecting…' : 'Connect'}</button><button class="btn" type="button" data-act="scan" ${dev.scanning ? 'disabled' : ''}>${dev.scanning ? 'Scanning…' : 'Scan for devices'}</button></div></form>`}
+  ${dev.error ? `<div class="notice ${dev.status === 'lost' ? 'warn' : 'bad'}" role="alert">${esc(dev.error)}</div>` : ''}</section>
+  ${!c && dev.found.length ? `<section class="card"><h2>Discovered devices</h2><div class="list">${dev.found.map(f => `<div class="item"><div class="grow"><b>${esc(f.id)}</b><div class="small muted">${esc(f.host)}</div></div><button class="btn primary" data-act="connect-found" data-host="${esc(f.host)}">Connect</button></div>`).join('')}</div></section>` : ''}
+  <section class="card flat"><h3>How the connection works</h3><p class="small muted">Wi-Fi scanning is not available to apps, so MediPulse looks for devices at the saved address and at <code>medipulse.local</code>. The phone and the device must be on the same network. Readings are only ever received from the device; nothing is simulated.</p></section>`;
+}
+
+function checkupView(u){
+  let body;
+  if (cp.phase === 'running') body = `<div class="empty"><div class="pulse-ring"></div><h2>Measuring…</h2><p>${esc(cp.msg)}</p><button class="btn" data-act="cancel">Cancel checkup</button></div>`;
+  else if (cp.phase === 'done' && cp.result){ const r = cp.result; body = `<div class="notice ok">Checkup completed and saved to your history.</div><div class="vitals"><div class="vital"><span class="muted small">Heart rate</span><b>${r.bpm}<small>BPM</small></b></div><div class="vital"><span class="muted small">Blood oxygen</span><b>${r.spo2}<small>% SpO₂</small></b></div></div><div class="actions" style="align-items:center">${qTag(r.quality)}<span class="small muted">${esc(fmtDT(r.at))} · ${esc(r.deviceId)}</span></div>${r.quality === 'poor' ? '<div class="notice warn">The device rated this measurement as low quality. Consider repeating it.</div>' : ''}<div class="actions"><button class="btn teal" data-act="start">New checkup</button><a class="btn" href="#record-${r.id}">Details</a></div>`; }
+  else if (dev.status !== 'connected') body = `<div class="empty">${ic('device',40)}<h2>Connect your device first</h2><p>A checkup needs a connected MediPulse device.</p><a class="btn primary" href="#device">Go to device</a></div>${cp.phase === 'failed' ? `<div class="notice bad" role="alert">${esc(cp.msg)}</div>` : ''}`;
+  else body = `${cp.phase === 'failed' ? `<div class="notice bad" role="alert">${esc(cp.msg)}</div>` : ''}<div class="empty">${ic('pulse',40)}<h2>Ready to measure</h2><p>Place your finger on the sensor, stay still, and press start.</p><button class="btn teal" data-act="start">Start checkup</button></div>`;
+  const now = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  return `<h1>New checkup</h1><section class="card">${body}</section>
+  <details class="card flat"><summary>Add a reading manually</summary><form class="form" data-form="manual" novalidate style="margin-top:14px"><p class="small muted">For a reading you took with another device. It is saved as a manual entry.</p><div class="row"><div class="field"><label for="mbpm">Heart rate (BPM)</label><input class="input" id="mbpm" inputmode="numeric" placeholder="e.g. 72"></div><div class="field"><label for="mspo2">SpO₂ (%)</label><input class="input" id="mspo2" inputmode="decimal" placeholder="e.g. 97"></div><div class="field"><label for="mat">Date and time</label><input class="input" id="mat" type="datetime-local" value="${now}" max="${now}"></div></div><p class="err" id="mErr" role="alert"></p><button class="btn primary" type="submit">Save reading</button></form></details>`;
+}
+
+function historyView(u){
+  const recs = Records.list(u.uid);
+  if (!recs.length) return `<h1>Medical history</h1><section class="card"><div class="empty">${ic('history',40)}<h2>No records yet</h2><p>Completed checkups are saved here, privately to your account.</p><a class="btn primary" href="#checkup">Start a checkup</a></div></section>`;
+  return `<h1>Medical history</h1>
+  <section class="card"><div class="actions" style="justify-content:space-between;align-items:center"><h2>Trends</h2><div class="seg" role="group" aria-label="Measurement"><button data-act="chart" data-key="bpm" aria-pressed="${ui.chartKey === 'bpm'}">Heart rate</button><button data-act="chart" data-key="spo2" aria-pressed="${ui.chartKey === 'spo2'}">SpO₂</button></div></div>${trend(recs, ui.chartKey)}<p class="small muted">${ui.chartKey === 'bpm' ? 'Beats per minute' : 'Oxygen saturation, %'} across your last ${Math.min(30, recs.length)} checkup${recs.length === 1 ? '' : 's'}.</p></section>
+  <section class="card"><h2>All checkups</h2><div class="list">${recs.map(r => `<a class="item" href="#record-${r.id}"><div class="grow"><b class="num">${r.bpm} BPM · ${r.spo2}% SpO₂</b><div class="small muted">${esc(fmtDT(r.at))}</div></div>${qTag(r.quality)}</a>`).join('')}</div></section>`;
+}
+
+function recordView(u, id){
+  const r = Records.list(u.uid).find(x => x.id === id);
+  if (!r) return `<a class="btn" href="#history">${ic('back',18)} History</a><section class="card"><div class="empty"><h2>Record not found</h2></div></section>`;
+  const armed = ui.armed === r.id;
+  return `<a class="btn" href="#history" style="width:max-content">${ic('back',18)} History</a><h1>Checkup details</h1>
+  <section class="card"><div class="vitals"><div class="vital"><span class="muted small">Heart rate</span><b>${r.bpm}<small>BPM</small></b></div><div class="vital"><span class="muted small">Blood oxygen</span><b>${r.spo2}<small>% SpO₂</small></b></div></div>
+  <dl class="kv"><dt>Date and time</dt><dd>${esc(fmtDT(r.at))}</dd><dt>Status</dt><dd>${esc(r.status)}</dd><dt>Quality</dt><dd>${qTag(r.quality)}</dd><dt>Device</dt><dd>${esc(r.deviceId)}</dd><dt>Source</dt><dd>${r.source === 'wifi' ? 'Device over Wi-Fi' : 'Manual entry'}</dd></dl>
+  <p class="small muted">MediPulse shows measurements only. It does not diagnose. Talk to a clinician about anything that concerns you.</p>
+  <button class="btn danger ${armed ? 'armed' : ''}" data-act="delete" data-id="${r.id}">${armed ? 'Tap again to delete permanently' : 'Delete this record'}</button></section>`;
+}
+
+function facilitiesView(){
+  const q = (t) => 'https://www.google.com/maps/search/' + encodeURIComponent(t + ' near me');
+  return `<h1>Nearby care</h1>
+  <div class="notice warn">In an emergency, call your local emergency number instead of using this page.</div>
+  <div class="grid2"><section class="card">${ic('map',32)}<h2>Hospitals</h2><p class="muted small">Opens a map of hospitals around you with directions.</p><a class="btn primary" href="${q('hospitals')}" target="_blank" rel="noopener">Find hospitals</a></section>
+  <section class="card">${ic('map',32)}<h2>Pharmacies</h2><p class="muted small">Opens a map of pharmacies around you with directions.</p><a class="btn primary" href="${q('pharmacies')}" target="_blank" rel="noopener">Find pharmacies</a></section></div>
+  <section class="card flat"><h3>About your location</h3><p class="small muted">MediPulse does not read or store your location. The map app asks for location permission itself, only when you open it. Embedded maps and direct GPS access are not available on this page; the hosted build can add them.</p></section>`;
+}
+
+function notifView(u){
+  const l = Notifs.list(u.uid);
+  return `<div class="actions" style="justify-content:space-between;align-items:center"><h1>Notifications</h1>${l.length ? `<div class="actions"><button class="btn" data-act="readall">Mark all read</button><button class="btn" data-act="clearnot">Clear</button></div>` : ''}</div>
+  <section class="card">${l.length ? `<div class="list">${l.map(n => `<${n.ref ? 'a href="#record-' + esc(n.ref) + '"' : 'div'} class="item ${n.read ? '' : 'unread'}"><div class="grow"><div class="t">${esc(n.title)}</div><div class="small muted">${esc(n.body)}</div><div class="small muted">${esc(fmtDT(n.at))}</div></div>${n.read ? '' : '<span class="dot" aria-label="Unread"></span>'}</${n.ref ? 'a' : 'div'}>`).join('')}</div>` : `<div class="empty">${ic('bell',40)}<h2>You are all caught up</h2><p>Checkup, device and account notices appear here.</p></div>`}</section>`;
+}
+
+function profileView(u){
+  const theme = KV.get('mp.theme', 'system');
+  return `<h1>Profile</h1>
+  <section class="card"><form class="form" data-form="profile" novalidate><div class="field"><label for="pname">Full name</label><input class="input" id="pname" value="${esc(u.name)}" maxlength="80"></div><div class="field"><label for="pemail">Email</label><input class="input" id="pemail" value="${esc(u.email)}" disabled></div><p class="err" id="pErr" role="alert"></p><button class="btn primary" type="submit" style="width:max-content">Save changes</button></form></section>
+  ${careSection(u)}
+  <section class="card"><h2>Appearance</h2><div class="seg" role="group" aria-label="Theme">${['system','light','dark'].map(t => `<button data-act="theme" data-t="${t}" aria-pressed="${theme === t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div></section>
+  <section class="card"><h2>Account</h2><div class="actions"><button class="btn primary" data-act="logout">Log out</button><button class="btn danger ${ui.armed === 'acct' ? 'armed' : ''}" data-act="delacct">${ui.armed === 'acct' ? 'Tap again to delete account and records' : 'Delete account'}</button></div></section>`;
+}
+
+const NAV = [['dashboard','Home','home'],['device','Device','device'],['checkup','Checkup','pulse'],['history','History','history'],['facilities','Nearby','map']];
+function shell(u, route, inner){
+  const un = Notifs.unread(u.uid);
+  const cur = route.startsWith('record-') ? 'history' : route;
+  const side = [...NAV, ['notifications','Notifications','bell'], ['profile','Profile','user']].map(([r,l,i]) => `<a class="nav" href="#${r}" ${cur === r ? 'aria-current="page"' : ''}>${ic(i)}${l}${r === 'notifications' && un ? `<span class="badge" style="position:static;margin-left:auto">${un}</span>` : ''}</a>`).join('');
+  const tabs = NAV.map(([r,l,i]) => `<a class="tab" href="#${r}" ${cur === r ? 'aria-current="page"' : ''}>${ic(i)}${l}</a>`).join('');
+  return `<div class="shell"><aside class="side"><div class="brand">${logo()}MediPulse</div>${side}</aside>
+  <div class="main"><header class="top content"><div class="brand">${logo()}MediPulse</div><div class="actions" style="margin-left:auto"><a class="icon-btn" href="#notifications" aria-label="Notifications${un ? ', ' + un + ' unread' : ''}">${ic('bell')}${un ? `<span class="badge">${un}</span>` : ''}</a><a class="icon-btn" href="#profile" aria-label="Profile">${ic('user')}</a></div></header><main class="content">${inner}</main></div>
+  <nav class="tabbar" aria-label="Main">${tabs}</nav></div>`;
+}
+
+/* ============ router ============ */
+const PUBLIC = ['login','signup','forgot','dlogin','dsignup','verify'];
+function render(){
+  const u = Auth.current();
+  const home = u && u.role === 'doctor' ? 'doctor' : 'dashboard';
+  let route = location.hash.slice(1) || (u ? home : 'login');
+  const root = $('#root');
+  if (!u && !PUBLIC.includes(route)) { location.hash = '#login'; return; }
+  if (u && PUBLIC.includes(route)) { location.hash = '#' + home; return; }
+  if (u && u.role === 'doctor') { $('#root').innerHTML = doctorView(u, route); docLoad(route); return; }
+  if (!u){ root.innerHTML = authView(route); return; }
+  if (!dev.host) dev.host = KV.get('mp.host.' + u.uid, '');
+  const views = {dashboard:dashView, device:deviceView, checkup:checkupView, history:historyView, facilities:facilitiesView, notifications:notifView, profile:profileView};
+  let inner;
+  if (route.startsWith('record-')) inner = recordView(u, route.slice(7));
+  else if (views[route]) inner = views[route](u);
+  else { location.hash = '#dashboard'; return; }
+  const active = document.activeElement && document.activeElement.id, sy = scrollY;
+  root.innerHTML = shell(u, route, inner);
+  if (active) { const el = document.getElementById(active); if (el) el.focus({preventScroll:true}); }
+  scrollTo(0, sy);
+}
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3500); }
+function applyTheme(){ const t = KV.get('mp.theme', 'system'); if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); }
+
+window.addEventListener('hashchange', () => { ui.authErr = ''; ui.armed = null; if (location.hash === '#notifications' && Auth.current()) { render(); Notifs.markAllRead(Auth.current().uid); setTimeout(render, 1500); return; } render(); });
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act, u = Auth.current();
+  if (a === 'disconnect') disconnectDevice();
+  else if (a === 'scan') scanDevices();
+  else if (a === 'connect-found') connectDevice(b.dataset.host);
+  else if (a === 'start') startCheckup();
+  else if (a === 'cancel') cancelCheckup();
+  else if (a === 'chart') { ui.chartKey = b.dataset.key; render(); }
+  else if (a === 'delete') { if (ui.armed === b.dataset.id) { Records.remove(u.uid, b.dataset.id); ui.armed = null; toast('Record deleted'); location.hash = '#history'; } else { ui.armed = b.dataset.id; render(); } }
+  else if (a === 'readall') { Notifs.markAllRead(u.uid); render(); }
+  else if (a === 'clearnot') { Notifs.clear(u.uid); render(); }
+  else if (a === 'theme') { KV.set('mp.theme', b.dataset.t); applyTheme(); render(); }
+  else if (a === 'cancellink') { Care.cancel().then(render).catch(e => toast(e.message)); }
+  else if (a === 'newcode') { Cloud.call('newCode').then(() => { ui.docList = null; render(); }).catch(e => toast(e.message)); }
+  else if (a === 'accept' || a === 'reject') { Cloud.call(a, {patientId:b.dataset.pid}).then(() => { toast(a === 'accept' ? 'Patient linked' : 'Request declined'); ui.docList = null; render(); }).catch(e => toast(e.message)); }
+  else if (a === 'unlink') { Care.unlink().then(render).catch(e => toast(e.message)); }
+  else if (a === 'resend') { Cloud.call('resend', {email:ui.verifyEmail}).then(() => toast('Code sent')).catch(e => toast(e.message)); }
+  else if (a === 'docrefresh') { ui.docList = null; ui.pt = null; render(); }
+  else if (a === 'resolve') { const t = (document.getElementById('rtext-' + b.dataset.eid) || {}).value || ''; Cloud.call('respond', {patientId:b.dataset.pid, emergencyId:b.dataset.eid, text:t, status:'resolved'}).then(() => { ui.docList = null; ui.pt = null; render(); }).catch(e => toast(e.message)); }
+  else if (a === 'logout') { ui.docList = null; ui.pt = null; clearInterval(dev.timer); Object.assign(dev, {status:'disconnected', host:'', id:'', error:'', found:[]}); Object.assign(cp, {phase:'idle'}); Auth.signOut(); location.hash = '#login'; render(); }
+  else if (a === 'delacct') { if (ui.armed === 'acct') { clearInterval(dev.timer); Auth.deleteAccount(u.uid); Object.assign(dev, {status:'disconnected', host:'', id:'', error:'', found:[]}); ui.armed = null; location.hash = '#login'; render(); } else { ui.armed = 'acct'; render(); } }
+});
+
+document.addEventListener('submit', async (e) => {
+  const f = e.target.closest('[data-form]'); if (!f) return;
+  e.preventDefault();
+  const kind = f.dataset.form, v = (id) => (document.getElementById(id) || {}).value || '';
+  const fail = (m) => { ui.authErr = m; const el = $('#authErr'); if (el) el.textContent = m; else toast(m); };
+  const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  try {
+    if (kind === 'login'){ const em = v('email').trim().toLowerCase(); if (!EMAIL.test(em) || !v('pw')) return fail('Enter your email and password.'); toast('Logging in…');
+      try { applySession(await Cloud.call('login', {email:em, pw:v('pw')})); } catch (err) { if (err.message === 'NOT_VERIFIED') { ui.verifyEmail = em; ui.authErr = ''; location.hash = '#verify'; render(); return; } throw err; }
+      ui.authErr = ''; location.hash = Auth.current().role === 'doctor' ? '#doctor' : '#dashboard'; render(); }
+    else if (kind === 'signup' || kind === 'dsignup'){ const nm = v('name').trim(), em = v('email').trim().toLowerCase(); if (!nm) return fail('Enter your full name.'); if (!EMAIL.test(em)) return fail('Enter a valid email address.'); if (v('pw').length < 8) return fail('Use a password with at least 8 characters.');
+      toast('Creating account…'); await Cloud.call('signup', {name:nm, email:em, pw:v('pw'), role:kind === 'dsignup' ? 'doctor' : 'patient', doctorKey:v('dkey')}); ui.verifyEmail = em; ui.authErr = ''; location.hash = '#verify'; render(); }
+    else if (kind === 'verify'){ const em = v('email').trim().toLowerCase(); if (!EMAIL.test(em) || !v('code').trim()) return fail('Enter your email and the 6-digit code.');
+      const d = await Cloud.call('verify', {email:em, code:v('code').trim()}); applySession(d);
+      if (d.user.role === 'patient') Notifs.add(d.user.id, {kind:'account', title:'Welcome to MediPulse', body:'Your account is ready. Connect your device to take your first checkup.'});
+      ui.authErr = ''; location.hash = d.user.role === 'doctor' ? '#doctor' : '#dashboard'; render(); }
+    else if (kind === 'link'){ if (!v('lcode').trim()) return fail('Enter the doctor link code.'); await Care.link(v('lcode').trim().toUpperCase()); toast('Request sent. Waiting for your doctor to accept.'); render(); }
+    else if (kind === 'emergency'){ await Care.raise(v('enote').trim()); toast('Emergency alert sent'); render(); }
+    else if (kind === 'respond'){ await Cloud.call('respond', {patientId:f.dataset.pid, emergencyId:f.dataset.eid, text:v('rtext-' + f.dataset.eid), status:'acknowledged'}); ui.docList = null; ui.pt = null; toast('Response sent'); render(); }
+    else if (kind === 'forgot'){ const em = v('email').trim().toLowerCase(); if (!EMAIL.test(em)) return fail('Enter a valid email address.'); await Auth.sendPasswordReset(em); }
+    else if (kind === 'connect') connectDevice(v('host'));
+    else if (kind === 'profile'){ const nm = v('pname').trim(), el = $('#pErr'); if (!nm) { el.textContent = 'Name cannot be empty.'; return; } const u = Auth.current(); Auth.updateName(u.uid, nm); Notifs.add(u.uid, {kind:'account', title:'Profile updated', body:'Your name was changed.'}); toast('Profile saved'); render(); }
+    else if (kind === 'manual'){ const bpm = Number(v('mbpm')), spo2 = Number(v('mspo2')), el = $('#mErr'); const at = new Date(v('mat'));
+      if (!validReading({bpm, spo2})) { el.textContent = 'Enter a heart rate between 20 and 250 and SpO₂ between 50 and 100.'; return; }
+      if (isNaN(at) || at > new Date()) { el.textContent = 'Choose a valid date and time that is not in the future.'; return; }
+      const rec = {id:uid(), bpm:Math.round(bpm), spo2:Math.round(spo2*10)/10, at:at.toISOString(), deviceId:'manual', quality:'n/a', status:'completed', source:'manual'};
+      saveRecord(rec); toast('Reading saved'); location.hash = '#record-' + rec.id; }
+  } catch (err) { fail(err.message || 'Something went wrong.'); }
+});
+
+applyTheme(); render();
+</script>
